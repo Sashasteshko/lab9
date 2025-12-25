@@ -1,11 +1,41 @@
 import 'package:flutter/material.dart';
+import '../service/api_service.dart';
 import 'signup_screen.dart';
 import 'reset_password_screen.dart';
 
-class SignInScreen extends StatelessWidget {
+class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
 
-  static final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  @override
+  State<SignInScreen> createState() => _SignInScreenState();
+}
+
+class _SignInScreenState extends State<SignInScreen> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  // 3. Сервіс API
+  final ApiService _apiService = ApiService();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  // Метод обробки входу
+  void _handleLogin() {
+    if (_formKey.currentState!.validate()) {
+      // Якщо валідація пройшла успішно, відправляємо запит
+      _apiService.postRequest(context, 'login', {
+        'email': _emailController.text,
+        'password': _passwordController.text,
+        'action': 'auth_attempt', // Додаткове поле для ідентифікації в логах
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,12 +59,13 @@ class SignInScreen extends StatelessWidget {
                 const SizedBox(height: 30),
 
                 TextFormField(
+                  controller: _emailController, // !!! Підключили контролер
                   keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(
                     labelText: 'E-mail (Логін)',
                     prefixIcon: Icon(Icons.email_outlined),
+                    border: OutlineInputBorder(), // Додав рамку для краси
                   ),
-                  // ВАЛІДАЦІЯ
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Введіть E-mail';
@@ -50,10 +81,12 @@ class SignInScreen extends StatelessWidget {
                 const SizedBox(height: 16),
 
                 TextFormField(
+                  controller: _passwordController, // !!! Підключили контролер
                   obscureText: true,
                   decoration: const InputDecoration(
                     labelText: 'Пароль',
                     prefixIcon: Icon(Icons.lock_outline),
+                    border: OutlineInputBorder(),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -68,15 +101,15 @@ class SignInScreen extends StatelessWidget {
                 const SizedBox(height: 24),
 
                 ElevatedButton(
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Дані валісні! Вхід...')),
-                      );
-                    }
-                  },
+                  onPressed: _handleLogin, // Викликаємо метод входу
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.teal,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
                   child: const Text('Увійти'),
                 ),
+
                 const SizedBox(height: 16),
 
                 OutlinedButton(

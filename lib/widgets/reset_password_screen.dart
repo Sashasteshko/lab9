@@ -1,9 +1,34 @@
 import 'package:flutter/material.dart';
+import '../service/api_service.dart';
 
-class ResetPasswordScreen extends StatelessWidget {
+class ResetPasswordScreen extends StatefulWidget {
   const ResetPasswordScreen({super.key});
 
-  static final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  @override
+  State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
+}
+
+class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final TextEditingController _emailController = TextEditingController();
+  final ApiService _apiService = ApiService();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
+
+  void _onResetPressed() {
+    if (_formKey.currentState!.validate()) {
+      _apiService.postRequest(context, 'reset-password', {
+        'email': _emailController.text,
+        'request_type': 'password_reset', // Додаткове поле (за бажанням)
+        'timestamp': DateTime.now().toIso8601String(),
+      });
+
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,15 +53,18 @@ class ResetPasswordScreen extends StatelessWidget {
               const SizedBox(height: 20),
 
               TextFormField(
+                controller: _emailController, // !!! Підключаємо контролер
                 keyboardType: TextInputType.emailAddress,
                 decoration: const InputDecoration(
                   labelText: 'Введіть ваш E-mail',
+                  border: OutlineInputBorder(), // Додав рамку для стилю
                   prefixIcon: Icon(Icons.mail_outline),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Це поле обов\'язкове';
                   }
+                  // Проста перевірка regex для email
                   if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
                     return 'Введіть дійсний E-mail';
                   }
@@ -45,18 +73,18 @@ class ResetPasswordScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
 
-              ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Інструкції надіслано на пошту!')),
-                    );
-                    Navigator.pop(context);
-                  }
-                },
-                child: const Text('Скинути пароль'),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orangeAccent, // Колір кнопки під іконку
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  onPressed: _onResetPressed, // Викликаємо нашу функцію
+                  child: const Text('Скинути пароль'),
+                ),
               ),
-
               const SizedBox(height: 10),
 
               TextButton(
